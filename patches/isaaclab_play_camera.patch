@@ -1,0 +1,58 @@
+diff --git a/scripts/reinforcement_learning/rl_games/play.py b/scripts/reinforcement_learning/rl_games/play.py
+index 36922ac..70406ea 100644
+--- a/scripts/reinforcement_learning/rl_games/play.py
++++ b/scripts/reinforcement_learning/rl_games/play.py
+@@ -76,6 +76,20 @@ def main():
+     env_cfg = parse_env_cfg(
+         args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric
+     )
++    # allow overriding the recording camera, e.g. VIEWER_RESOLUTION=1920x1080
++    # VIEWER_FOLLOW=robot makes the camera track that asset's root in env 0;
++    # VIEWER_EYE / VIEWER_LOOKAT are comma-separated offsets in the chosen frame.
++    if os.environ.get("VIEWER_RESOLUTION"):
++        width, height = (int(v) for v in os.environ["VIEWER_RESOLUTION"].split("x"))
++        env_cfg.viewer.resolution = (width, height)
++    if os.environ.get("VIEWER_FOLLOW"):
++        env_cfg.viewer.origin_type = "asset_root"
++        env_cfg.viewer.asset_name = os.environ["VIEWER_FOLLOW"]
++        env_cfg.viewer.env_index = 0
++    if os.environ.get("VIEWER_EYE"):
++        env_cfg.viewer.eye = tuple(float(v) for v in os.environ["VIEWER_EYE"].split(","))
++    if os.environ.get("VIEWER_LOOKAT"):
++        env_cfg.viewer.lookat = tuple(float(v) for v in os.environ["VIEWER_LOOKAT"].split(","))
+     agent_cfg = load_cfg_from_registry(args_cli.task, "rl_games_cfg_entry_point")
+ 
+     # specify directory for logging experiments
+diff --git a/scripts/reinforcement_learning/rsl_rl/play.py b/scripts/reinforcement_learning/rsl_rl/play.py
+index e3c0121..f42668b 100644
+--- a/scripts/reinforcement_learning/rsl_rl/play.py
++++ b/scripts/reinforcement_learning/rsl_rl/play.py
+@@ -70,6 +70,28 @@ def main():
+     env_cfg = parse_env_cfg(
+         args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric
+     )
++    # allow overriding the recording camera, e.g. VIEWER_RESOLUTION=1920x1080
++    # VIEWER_FOLLOW=robot makes the camera track that asset's root in env 0;
++    # VIEWER_EYE / VIEWER_LOOKAT are comma-separated offsets in the chosen frame.
++    if os.environ.get("VIEWER_RESOLUTION"):
++        width, height = (int(v) for v in os.environ["VIEWER_RESOLUTION"].split("x"))
++        env_cfg.viewer.resolution = (width, height)
++    if os.environ.get("VIEWER_FOLLOW"):
++        env_cfg.viewer.origin_type = "asset_root"
++        env_cfg.viewer.asset_name = os.environ["VIEWER_FOLLOW"]
++        env_cfg.viewer.env_index = 0
++    if os.environ.get("VIEWER_EYE"):
++        env_cfg.viewer.eye = tuple(float(v) for v in os.environ["VIEWER_EYE"].split(","))
++    if os.environ.get("VIEWER_LOOKAT"):
++        env_cfg.viewer.lookat = tuple(float(v) for v in os.environ["VIEWER_LOOKAT"].split(","))
++    if os.environ.get("VIEWER_HIDE_COMMANDS"):
++        # hide debug markers (command arrows, terrain origin axes) for clean footage
++        if hasattr(env_cfg, "commands"):
++            for term in vars(env_cfg.commands).values():
++                if hasattr(term, "debug_vis"):
++                    term.debug_vis = False
++        if hasattr(env_cfg, "scene") and getattr(env_cfg.scene, "terrain", None) is not None:
++            env_cfg.scene.terrain.debug_vis = False
+     agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)
+ 
+     # specify directory for logging experiments
